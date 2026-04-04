@@ -2,13 +2,14 @@
   "name": "比索提取器 Peso Extractor",
   "short_name": "比索计算",
   "description": "从文字中提取比索金额并统计 / Extract and sum PHP peso amounts from text",
-  "start_url": "/index.html",
+  "start_url": "/Peso-Amount-Calculator/",
+  "scope": "/Peso-Amount-Calculator/",
   "display": "standalone",
   "background_color": "#0a1628",
   "theme_color": "#0a1628",
   "orientation": "portrait",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/Peso-Amount-Calculator/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/Peso-Amount-Calculator/icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
