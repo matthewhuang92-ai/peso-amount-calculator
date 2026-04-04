@@ -527,7 +527,7 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+      navigator.serviceWorker.register('/Peso-Amount-Calculator/sw.js', { scope: '/Peso-Amount-Calculator/' });
     }
   </script>
 </body>
