@@ -364,6 +364,34 @@
     }
 
     .hidden { display: none; }
+
+    /* Mode selector */
+    .mode-selector {
+      display: flex;
+      gap: 8px;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      letter-spacing: 0.03em;
+    }
+
+    .mode-btn.active {
+      background: var(--accent);
+      color: #0a1628;
+      border-color: var(--accent);
+    }
   </style>
 </head>
 <body>
@@ -373,6 +401,11 @@
       <h1>金额统计<br><span>Amount Calculator</span></h1>
       <p class="subtitle">粘贴文字 → 自动识别所有比索金额 / Paste text to extract PHP amounts</p>
     </header>
+
+    <div class="mode-selector">
+      <button class="mode-btn active" id="modeXinxin" onclick="setMode('xinxin')">薪薪</button>
+      <button class="mode-btn" id="modeLexiaoyao" onclick="setMode('lexiaoyao')">乐逍遥</button>
+    </div>
 
     <div class="input-section">
       <span class="input-label">输入文本 · Input Text</span>
@@ -429,15 +462,47 @@
 
   <script>
     let lastCopyText = '';
+    let currentMode = 'xinxin';
 
-    function extract() {
-      const text = document.getElementById('inputText').value;
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('modeXinxin').classList.toggle('active', mode === 'xinxin');
+      document.getElementById('modeLexiaoyao').classList.toggle('active', mode === 'lexiaoyao');
+      document.getElementById('inputText').placeholder = mode === 'xinxin'
+        ? '粘贴包含金额的文字…\n例：付款3885比索，手续费200比索\n\nPaste text with peso amounts…'
+        : '粘贴乐逍遥格式文字…\n每3行一组，第3行为金额\n\nPaste 乐逍遥 format text…';
+      document.getElementById('resultsSection').classList.add('hidden');
+      document.getElementById('emptyState').classList.add('hidden');
+    }
+
+    function extractXinxin(text) {
       const pattern = /(\d[\d,]*)\s*比索/g;
       const matches = [];
       let m;
       while ((m = pattern.exec(text)) !== null) {
         matches.push(parseInt(m[1].replace(/,/g, '')));
       }
+      return matches;
+    }
+
+    function extractLexiaoyao(text) {
+      const lines = text.split('\n')
+        .map(l => l.trim())
+        .filter(l => l.length > 0);
+      const matches = [];
+      for (let i = 2; i < lines.length; i += 3) {
+        if (/^\d{1,5}$/.test(lines[i])) {
+          matches.push(parseInt(lines[i], 10));
+        }
+      }
+      return matches;
+    }
+
+    function extract() {
+      const text = document.getElementById('inputText').value;
+      const matches = currentMode === 'xinxin'
+        ? extractXinxin(text)
+        : extractLexiaoyao(text);
 
       const resultsSection = document.getElementById('resultsSection');
       const emptyState = document.getElementById('emptyState');
@@ -464,8 +529,9 @@
       // Build copy text (WeChat-friendly)
       const now = new Date();
       const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      const modeLabel = currentMode === 'xinxin' ? '薪薪' : '乐逍遥';
       lastCopyText =
-`【比索金额统计】${dateStr}
+`【${modeLabel}金额统计】${dateStr}
 总金额：₱${total.toLocaleString()}
 笔　数：${matches.length} 笔`;
 
