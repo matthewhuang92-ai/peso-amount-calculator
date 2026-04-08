@@ -593,7 +593,17 @@
     });
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/Peso-Amount-Calculator/sw.js', { scope: '/Peso-Amount-Calculator/' });
+      navigator.serviceWorker.register('/Peso-Amount-Calculator/sw.js', { scope: '/Peso-Amount-Calculator/' })
+        .then(reg => {
+          reg.addEventListener('updatefound', () => {
+            const sw = reg.installing;
+            sw.addEventListener('statechange', () => {
+              if (sw.state === 'activated' && navigator.serviceWorker.controller) {
+                window.location.reload();
+              }
+            });
+          });
+        });
     }
   </script>
 </body>
