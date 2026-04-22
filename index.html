@@ -147,7 +147,6 @@
     }
 
     .btn-primary {
-      width: 100%;
       padding: 16px;
       background: var(--accent);
       color: #0a1628;
@@ -350,7 +349,6 @@
       font-weight: 500;
       padding: 10px;
       border-radius: var(--radius);
-      width: 100%;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       letter-spacing: 0.03em;
@@ -392,6 +390,82 @@
       color: #0a1628;
       border-color: var(--accent);
     }
+
+    /* Exchange rate input row */
+    .exchange-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+    }
+
+    .exchange-row label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .exchange-row input[type="number"] {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 4px 2px;
+      outline: none;
+      min-width: 0;
+      -webkit-appearance: none;
+      -moz-appearance: textfield;
+    }
+
+    .exchange-row input[type="number"]::-webkit-inner-spin-button,
+    .exchange-row input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+    }
+
+    .exchange-row input[type="number"]:focus {
+      border-bottom-color: rgba(245,166,35,0.5);
+    }
+
+    .exchange-row input[type="number"]::placeholder {
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    /* RMB conversion stat card */
+    .stat-card.rmb {
+      grid-column: 1 / -1;
+      background: var(--surface2);
+      border-color: rgba(76,222,128,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card.rmb::before {
+      content: '¥';
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 60px;
+      font-weight: 700;
+      color: rgba(76,222,128,0.07);
+      pointer-events: none;
+    }
+
+    .stat-card.rmb .stat-value {
+      font-size: 30px;
+      color: var(--green);
+    }
   </style>
 </head>
 <body>
@@ -410,7 +484,14 @@
     <div class="input-section">
       <span class="input-label">输入文本 · Input Text</span>
       <textarea id="inputText" placeholder="粘贴包含金额的文字…&#10;例：付款3885比索，手续费200比索&#10;&#10;Paste text with peso amounts…"></textarea>
-      <button class="btn-primary" onclick="extract()">▶ 提取金额 · Extract Amounts</button>
+      <div class="exchange-row">
+        <label for="exchangeRate">汇率 ₱→¥</label>
+        <input type="number" id="exchangeRate" placeholder="例：8.7" min="0" step="0.01">
+      </div>
+      <div style="display:flex; gap:10px; align-items:stretch;">
+        <button class="btn-primary" onclick="extract()" style="flex:2">▶ 统计</button>
+        <button class="btn-clear" onclick="clearAll()" style="flex:1">✕ 清空</button>
+      </div>
     </div>
 
     <div id="resultsSection" class="hidden">
@@ -425,6 +506,10 @@
           <div class="stat-card" style="grid-column:1/-1">
             <span class="stat-name">笔数 · Count</span>
             <span class="stat-value" id="countVal">0</span>
+          </div>
+          <div class="stat-card rmb hidden" id="rmbCard">
+            <span class="stat-name">人民币 · RMB</span>
+            <span class="stat-value" id="rmbVal">¥0</span>
           </div>
         </div>
 
@@ -445,7 +530,6 @@
           <div class="copy-text" id="copyPreview"></div>
         </div>
 
-        <button class="btn-clear" onclick="clearAll()">✕ 清除重新输入 · Clear</button>
       </div>
     </div>
 
@@ -517,8 +601,21 @@
 
       const total = matches.reduce((a, b) => a + b, 0);
 
+      const rateInput = document.getElementById('exchangeRate');
+      const rate = parseFloat(rateInput.value);
+      const hasRate = rate > 0;
+      const rmbAmount = hasRate ? Math.round(total / rate) : 0;
+
       document.getElementById('totalVal').textContent = '₱ ' + total.toLocaleString();
       document.getElementById('countVal').textContent = matches.length + ' 笔';
+
+      const rmbCard = document.getElementById('rmbCard');
+      if (hasRate) {
+        document.getElementById('rmbVal').textContent = '¥' + rmbAmount.toLocaleString();
+        rmbCard.classList.remove('hidden');
+      } else {
+        rmbCard.classList.add('hidden');
+      }
 
       // Breakdown tags
       const list = document.getElementById('amountsList');
@@ -529,11 +626,12 @@
       // Build copy text (WeChat-friendly)
       const now = new Date();
       const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
       const modeLabel = currentMode === 'xinxin' ? '薪薪' : '乐逍遥';
       lastCopyText =
-`【${modeLabel}金额统计】${dateStr}
+`【${modeLabel}金额统计】${dateStr} ${timeStr}
 总金额：₱${total.toLocaleString()}
-笔　数：${matches.length} 笔`;
+笔　数：${matches.length} 笔${hasRate ? `\n人民币：¥${rmbAmount.toLocaleString()}` : ''}`;
 
       document.getElementById('copyPreview').textContent = lastCopyText;
 
@@ -585,6 +683,7 @@
       document.getElementById('inputText').value = '';
       document.getElementById('resultsSection').classList.add('hidden');
       document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('rmbCard').classList.add('hidden');
       lastCopyText = '';
     }
 
